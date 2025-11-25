@@ -1,8 +1,10 @@
 FROM tomcat:11-jdk17
 
+# Remove default Tomcat applications
 RUN rm -rf /usr/local/tomcat/webapps/*
 
-COPY *.war /usr/local/tomcat/webapps/ROOT.war
+# Copy WAR produced from the webapp module
+COPY webapp.war /usr/local/tomcat/webapps/ROOT.war
 
 EXPOSE 8080
 
