@@ -4,7 +4,7 @@ FROM tomcat:11-jdk17
 RUN rm -rf /usr/local/tomcat/webapps/*
 
 # Copy WAR produced from the webapp module
-COPY webapp.war /usr/local/tomcat/webapps/ROOT.war
+COPY webapp.war /usr/local/tomcat/webapps/webapp.war
 
 EXPOSE 8080
 
