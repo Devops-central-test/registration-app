@@ -1,6 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -20,29 +21,32 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
-    <!-- Multi Modules -->
+    <!-- MODULES -->
     <modules>
         <module>server</module>
         <module>webapp</module>
     </modules>
 
-    <!-- ⭐ Nexus Deployment (Correct IDs matching settings.xml) -->
+    <!-- ✔ UPDATED FOR YOUR NEXUS SERVER (34.227.46.182) -->
     <distributionManagement>
+        <!-- RELEASE ARTIFACTS -->
         <repository>
             <id>nexus-releases</id>
-            <url>http://3.91.16.199:8081/repository/maven-releases/</url>
+            <url>http://34.227.46.182:8081/repository/maven-releases/</url>
         </repository>
 
+        <!-- SNAPSHOT ARTIFACTS -->
         <snapshotRepository>
             <id>nexus-snapshots</id>
-            <url>http://3.91.16.199:8081/repository/maven-snapshots/</url>
+            <url>http://34.227.46.182:8081/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
-    <!-- Parent-level dependencies -->
+    <!-- DEPENDENCY MANAGEMENT -->
     <dependencyManagement>
         <dependencies>
 
+            <!-- Servlet API -->
             <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>javax.servlet-api</artifactId>
@@ -50,6 +54,7 @@
                 <scope>provided</scope>
             </dependency>
 
+            <!-- JSP API -->
             <dependency>
                 <groupId>javax.servlet.jsp</groupId>
                 <artifactId>javax.servlet.jsp-api</artifactId>
@@ -57,6 +62,7 @@
                 <scope>provided</scope>
             </dependency>
 
+            <!-- JUnit -->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
@@ -64,6 +70,7 @@
                 <scope>test</scope>
             </dependency>
 
+            <!-- Mockito -->
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
@@ -74,36 +81,34 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- BUILD PLUGINS -->
     <build>
-
-        <!-- ❗ This is pluginManagement only (does NOT execute plugins) -->
         <pluginManagement>
             <plugins>
 
+                <!-- COMPILER PLUGIN -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.10.1</version>
                 </plugin>
 
+                <!-- WAR PLUGIN -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-war-plugin</artifactId>
                     <version>3.3.2</version>
                 </plugin>
 
+                <!-- DEPLOY PLUGIN (required for Nexus) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.1</version>
+                </plugin>
+
             </plugins>
         </pluginManagement>
-
-        <!-- ⭐ MUST be here to EXECUTE deploy plugin -->
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.1.1</version>
-            </plugin>
-        </plugins>
-
     </build>
 
 </project>
