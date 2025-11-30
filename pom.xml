@@ -21,28 +21,30 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
-    <!-- MODULES -->
+    <!-- MULTI-MODULE SETUP -->
     <modules>
         <module>server</module>
         <module>webapp</module>
     </modules>
 
-    <!-- ✔ UPDATED FOR YOUR NEXUS SERVER (34.227.46.182) -->
+    <!-- ⭐ CORRECT NEXUS CONFIG (must match settings.xml) -->
     <distributionManagement>
-        <!-- RELEASE ARTIFACTS -->
+
+        <!-- RELEASE repository -->
         <repository>
             <id>nexus-releases</id>
             <url>http://34.227.46.182:8081/repository/maven-releases/</url>
         </repository>
 
-        <!-- SNAPSHOT ARTIFACTS -->
+        <!-- SNAPSHOT repository -->
         <snapshotRepository>
             <id>nexus-snapshots</id>
             <url>http://34.227.46.182:8081/repository/maven-snapshots/</url>
         </snapshotRepository>
+
     </distributionManagement>
 
-    <!-- DEPENDENCY MANAGEMENT -->
+    <!-- MANAGE DEPENDENCY VERSIONS -->
     <dependencyManagement>
         <dependencies>
 
@@ -93,14 +95,14 @@
                     <version>3.10.1</version>
                 </plugin>
 
-                <!-- WAR PLUGIN -->
+                <!-- WAR PACKAGING PLUGIN -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-war-plugin</artifactId>
                     <version>3.3.2</version>
                 </plugin>
 
-                <!-- DEPLOY PLUGIN (required for Nexus) -->
+                <!-- DEPLOY PLUGIN (required for Nexus uploads) -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
