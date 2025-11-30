@@ -27,16 +27,17 @@
         <module>webapp</module>
     </modules>
 
-    <!-- ⭐ CORRECT NEXUS CONFIG (must match settings.xml) -->
+    <!-- ⭐ Correct Nexus configuration -->
+    <!-- IDs MUST MATCH settings.xml EXACTLY -->
     <distributionManagement>
 
-        <!-- RELEASE repository -->
+        <!-- RELEASE repo -->
         <repository>
             <id>nexus-releases</id>
             <url>http://34.227.46.182:8081/repository/maven-releases/</url>
         </repository>
 
-        <!-- SNAPSHOT repository -->
+        <!-- SNAPSHOT repo -->
         <snapshotRepository>
             <id>nexus-snapshots</id>
             <url>http://34.227.46.182:8081/repository/maven-snapshots/</url>
@@ -44,7 +45,7 @@
 
     </distributionManagement>
 
-    <!-- MANAGE DEPENDENCY VERSIONS -->
+    <!-- DEPENDENCY MANAGEMENT -->
     <dependencyManagement>
         <dependencies>
 
@@ -88,21 +89,21 @@
         <pluginManagement>
             <plugins>
 
-                <!-- COMPILER PLUGIN -->
+                <!-- Compiler -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.10.1</version>
                 </plugin>
 
-                <!-- WAR PACKAGING PLUGIN -->
+                <!-- WAR -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-war-plugin</artifactId>
                     <version>3.3.2</version>
                 </plugin>
 
-                <!-- DEPLOY PLUGIN (required for Nexus uploads) -->
+                <!-- Deploy (Nexus upload) -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
