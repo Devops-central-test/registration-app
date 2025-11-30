@@ -20,25 +20,26 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
-    <!-- Modules -->
+    <!-- Multi Modules -->
     <modules>
         <module>server</module>
         <module>webapp</module>
     </modules>
 
-    <!-- ⭐ Nexus Deployment -->
+    <!-- ⭐ Nexus Deployment (Correct IDs matching settings.xml) -->
     <distributionManagement>
         <repository>
-            <id>nexus</id>
+            <id>nexus-releases</id>
             <url>http://3.91.16.199:8081/repository/maven-releases/</url>
         </repository>
 
         <snapshotRepository>
-            <id>nexus</id>
+            <id>nexus-snapshots</id>
             <url>http://3.91.16.199:8081/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
+    <!-- Parent-level dependencies -->
     <dependencyManagement>
         <dependencies>
 
@@ -74,6 +75,8 @@
     </dependencyManagement>
 
     <build>
+
+        <!-- ❗ This is pluginManagement only (does NOT execute plugins) -->
         <pluginManagement>
             <plugins>
 
@@ -89,14 +92,18 @@
                     <version>3.3.2</version>
                 </plugin>
 
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.1</version>
-                </plugin>
-
             </plugins>
         </pluginManagement>
+
+        <!-- ⭐ MUST be here to EXECUTE deploy plugin -->
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.1</version>
+            </plugin>
+        </plugins>
+
     </build>
 
 </project>
