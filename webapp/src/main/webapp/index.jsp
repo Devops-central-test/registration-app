@@ -13,7 +13,7 @@
 <form action="action_page.php" method="post">
 
   <div class="container">
-    <h1>This is DevOps created by Vikas Upadhyay</h1>
+    <h1>DevOps with Vikas Upadhyay</h1>
     <p>Please fill in this form to create an account.</p>
     <hr>
 
