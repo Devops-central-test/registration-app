@@ -1,0 +1,165 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk17'
+        maven 'maven3'
+    }
+
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+        DOCKER_IMAGE = "devopscentraltest/registration-app"
+    }
+
+    stages {
+
+        /* ----------------------------------
+             1. CHECKOUT CODE 
+        ---------------------------------- */
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'git-cred',
+                    url: 'https://github.com/Devops-central-test/registration-app.git'
+            }
+        }
+
+        /* ----------------------------------
+             2. COMPILE
+        ---------------------------------- */
+        stage('Compile') {
+            steps {
+                sh "mvn -pl webapp -am clean compile"
+            }
+        }
+
+        /* ----------------------------------
+             3. TEST
+        ---------------------------------- */
+        stage('Run Tests') {
+            steps {
+                sh "mvn -pl webapp -am test"
+            }
+        }
+
+        /* ----------------------------------
+             4. SONARQUBE ANALYSIS
+        ---------------------------------- */
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    withCredentials([
+                        string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')
+                    ]) {
+                        sh """
+                            $SCANNER_HOME/bin/sonar-scanner \
+                              -Dsonar.host.url=http://34.227.46.182:9000 \
+                              -Dsonar.token=$SONAR_TOKEN \
+                              -Dsonar.projectKey=JavaProject \
+                              -Dsonar.projectName=JavaProject \
+                              -Dsonar.sources=webapp/src \
+                              -Dsonar.java.binaries=webapp/target
+                        """
+                    }
+                }
+            }
+        }
+
+        /* ----------------------------------
+             5. BUILD WAR FILE
+        ---------------------------------- */
+        stage('Build WAR') {
+            steps {
+                sh "mvn -pl webapp -am package"
+            }
+        }
+
+        /* ----------------------------------
+             6. UPLOAD WAR TO NEXUS
+        ---------------------------------- */
+        stage('Upload WAR to Nexus') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'nexus-cred',
+                        usernameVariable: 'NEXUS_USER',
+                        passwordVariable: 'NEXUS_PASS'
+                    )
+                ]) {
+
+                    configFileProvider([
+                        configFile(fileId: 'MySettings', targetLocation: 'settings.xml')
+                    ]) {
+
+                        sh """
+                            mvn -s settings.xml -pl webapp -am deploy
+                        """
+                    }
+                }
+            }
+        }
+
+        /* ----------------------------------
+             7. BUILD DOCKER IMAGE
+        ---------------------------------- */
+        stage('Build Docker Image') {
+            steps {
+                sh "cp webapp/target/*.war webapp/registration-app.war"
+
+                sh """
+                    docker build -t $DOCKER_IMAGE:${BUILD_NUMBER} -f Dockerfile .
+                """
+            }
+        }
+
+        /* ----------------------------------
+             8. PUSH TO DOCKER HUB
+        ---------------------------------- */
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-cred',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                        docker push $DOCKER_IMAGE:${BUILD_NUMBER}
+
+                        docker tag $DOCKER_IMAGE:${BUILD_NUMBER} $DOCKER_IMAGE:latest
+                        docker push $DOCKER_IMAGE:latest
+                    """
+                }
+            }
+        }
+
+        /* ----------------------------------
+             9. SAVE IMAGE TAG FOR CD PIPELINE
+        ---------------------------------- */
+        stage('Save Image Tag') {
+            steps {
+                script {
+                    writeFile file: 'image_tag.txt', text: "${BUILD_NUMBER}"
+                }
+
+                archiveArtifacts artifacts: 'image_tag.txt', onlyIfSuccessful: true
+            }
+        }
+
+        /* ----------------------------------
+             10. ARCHIVE WAR FILE
+        ---------------------------------- */
+        stage('Archive WAR') {
+            steps {
+                archiveArtifacts artifacts: 'webapp/target/*.war', fingerprint: true
+            }
+        }
+        stage('Trigger CD Pipeline') {
+            steps {
+                build job: 'Registration_project_CD', wait: false   // 🔥 Trigger CD Job
+            }
+        }
+    }
+}
