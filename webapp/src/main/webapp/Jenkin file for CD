@@ -1,0 +1,95 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_CREDENTIALS = 'github-creds'
+        MANIFEST_REPO   = 'https://github.com/Devops-central-test/registration-manifests.git'
+    }
+
+    stages {
+
+        stage('Download Image Tag From CI Job') {
+            steps {
+                echo "Fetching image_tag.txt..."
+                copyArtifacts(
+                    projectName: 'Registration_project-CI',
+                    filter: 'image_tag.txt',
+                    selector: [$class: 'StatusBuildSelector']
+                )
+
+                script {
+                    env.IMAGE = "devopscentraltest/registration-app:${readFile('image_tag.txt').trim()}"
+                    echo "Using image: ${env.IMAGE}"
+                }
+            }
+        }
+
+        stage('Checkout Manifest Repo') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "main"]],
+                    userRemoteConfigs: [[
+                        url: "${MANIFEST_REPO}",
+                        credentialsId: "${GIT_CREDENTIALS}"
+                    ]]
+                ])
+            }
+        }
+
+        stage('Pull Latest BEFORE Editing') {
+            steps {
+                script {
+                    sh "git checkout main"
+
+                    withCredentials([usernamePassword(
+                        credentialsId: "${GIT_CREDENTIALS}",
+                        usernameVariable: 'USER',
+                        passwordVariable: 'PASS'
+                    )]) {
+
+                        echo "Pulling latest changes BEFORE editing file..."
+
+                        sh """
+                        git fetch origin main
+                        git reset --hard origin/main
+                        git pull --strategy-option theirs https://${USER}:${PASS}@github.com/Devops-central-test/registration-manifests.git main
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Update Deployment YAML') {
+            steps {
+                sh """
+                sed -i 's#image:.*#image: ${env.IMAGE}#g' regapp-deploy.yml
+                """
+            }
+        }
+
+        stage('Commit & Push Changes') {
+            steps {
+                script {
+                    sh "git config user.email 'jenkins@local'"
+                    sh "git config user.name 'Jenkins'"
+
+                    sh "git add regapp-deploy.yml"
+                    sh "git commit -m 'CD Pipeline: Deploying new image ${env.IMAGE}' || true"
+
+                    withCredentials([usernamePassword(
+                        credentialsId: "${GIT_CREDENTIALS}",
+                        usernameVariable: 'USER',
+                        passwordVariable: 'PASS'
+                    )]) {
+
+                        echo "Pushing to GitHub..."
+                        sh """
+                        git push https://${USER}:${PASS}@github.com/Devops-central-test/registration-manifests.git main
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
