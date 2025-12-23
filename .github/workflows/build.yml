@@ -1,4 +1,4 @@
-name: Build & SonarQube Scan
+name: Build → Sonar → Nexus → DockerHub
 
 on:
   push:
@@ -9,14 +9,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      IMAGE_NAME: yourdockerhubusername/teaching-app
+      IMAGE_TAG: v1.${{ github.run_number }}
+
     steps:
-      # Checkout source code
+      # --------------------------------------------------
+      # 1. Checkout Code
+      # --------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Setup Java
+      # --------------------------------------------------
+      # 2. Setup Java 11 + Maven Cache
+      # --------------------------------------------------
       - name: Set up JDK 11
         uses: actions/setup-java@v4
         with:
@@ -24,7 +32,9 @@ jobs:
           java-version: '11'
           cache: maven
 
-      # Cache SonarQube
+      # --------------------------------------------------
+      # 3. Cache SonarQube
+      # --------------------------------------------------
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
@@ -33,7 +43,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sonar
 
-      # Build + SonarQube Scan
+      # --------------------------------------------------
+      # 4. Build + SonarQube Scan
+      # --------------------------------------------------
       - name: Build and Analyze with SonarQube
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -44,3 +56,40 @@ jobs:
             -Dsonar.projectKey=teaching_project \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
+
+      # --------------------------------------------------
+      # 5. Upload WAR to Nexus
+      # --------------------------------------------------
+      - name: Upload WAR to Nexus
+        env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          NEXUS_URL: ${{ secrets.NEXUS_URL }}
+        run: |
+          mvn deploy -DskipTests \
+            -Dnexus.username=$NEXUS_USERNAME \
+            -Dnexus.password=$NEXUS_PASSWORD \
+            -Dnexus.url=$NEXUS_URL
+
+      # --------------------------------------------------
+      # 6. Login to Docker Hub
+      # --------------------------------------------------
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # --------------------------------------------------
+      # 7. Build Docker Image (Tomcat + WAR)
+      # --------------------------------------------------
+      - name: Build Docker Image
+        run: |
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+      # --------------------------------------------------
+      # 8. Push Docker Image to Docker Hub
+      # --------------------------------------------------
+      - name: Push Docker Image
+        run: |
+          docker push $IMAGE_NAME:$IMAGE_TAG
